@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ООО «ДевХард» — ITAM & Client Asset Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        body.locked > header, body.locked > main { display: none; }
+        body.role-client .staff-only { display: none !important; }
+        @media (max-width: 767px) {
+            table.rt thead { display: none; }
+            table.rt, table.rt tbody, table.rt tr { display: block; width: 100%; }
+            table.rt tr { padding: .75rem 1rem; border-bottom: 1px solid #1e293b; }
+            table.rt td { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .35rem 0 !important; text-align: right; }
+            table.rt td::before { content: attr(data-label); color: #64748b; font-size: .7rem; text-transform: uppercase; font-weight: 600; text-align: left; }
+        }
+    </style>
+</head>
+<body class="locked bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-cyan-500 selection:text-white">
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-screen" class="fixed inset-0 z-[60] flex bg-gradient-to-br from-cyan-950/70 via-slate-950 to-indigo-950/70 p-4 overflow-y-auto">
+        <div class="w-full max-w-4xl space-y-6 animate-fade-in m-auto">
+            <div class="flex items-center justify-center space-x-3">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-950/50"><i data-lucide="cpu" class="w-6 h-6 text-white"></i></div>
+                <div><span class="text-lg font-bold tracking-tight text-white">DevHard</span><p class="text-xs text-slate-400">ООО «ДевХард» — Учет ИТ-активов и Клиентский портал</p></div>
+            </div>
+            <div id="login-blocks" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+            <p class="text-center text-xs text-slate-500">Кабинет 420 · +375 (33) 346-79-87</p>
+        </div>
+    </div>
+    <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand / Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-950/50">
+                    <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg font-bold tracking-tight text-white">DevHard</span>
+                        <span class="text-xs bg-cyan-500/20 text-cyan-400 font-semibold px-2 py-0.5 rounded-full border border-cyan-500/30">ITAM v2.6</span>
+                    </div>
+                    <p class="text-xs text-slate-400">ООО «ДевХард» — Учет ИТ-активов и Клиентский портал</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+            <div class="hidden lg:flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-sm">
+                    <i data-lucide="phone" class="w-4 h-4 text-cyan-400"></i>
+                    <span class="font-medium text-slate-200">+375 (33) 346-79-87</span>
+                </div>
+                <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-sm">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-indigo-400"></i>
+                    <span class="font-medium text-slate-200">Каб. 420</span>
+                </div>
+                
+            </div>
+                <div class="flex items-center space-x-2">
+                    <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 shadow-sm">
+                        <i data-lucide="user" class="w-4 h-4 text-cyan-400"></i>
+                        <div class="leading-tight">
+                            <p id="user-chip-name" class="text-xs font-semibold text-slate-200"></p>
+                            <p id="user-chip-role" class="text-[10px] font-semibold"></p>
+                        </div>
+                    </div>
+                    <button onclick="toggleNotif()" class="relative bg-slate-800 hover:bg-slate-700 p-2 rounded-xl border border-slate-700" title="Уведомления"><i data-lucide="bell" class="w-4 h-4 text-amber-400"></i><span id="notif-badge" class="hidden absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">0</span></button>
+                    <button onclick="logout()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-sm border border-slate-700 transition-all flex items-center space-x-2" title="Выйти">
+                        <i data-lucide="log-out" class="w-4 h-4 text-red-400"></i><span class="hidden sm:inline">Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-slate-950/60 border-t border-slate-800 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-4 overflow-x-auto py-2.5">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Главная</span>
+                </button>
+                <button onclick="switchTab('inventory')" id="nav-inventory" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-900">
+                    <i data-lucide="server" class="w-4 h-4"></i>
+                    <span id="nav-inventory-label">Учет активов</span>
+                </button>
+                <button onclick="switchTab('tickets')" id="nav-tickets" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-900">
+                    <i data-lucide="ticket" class="w-4 h-4"></i>
+                    <span id="nav-tickets-label">Service Desk</span>
+                </button>
+                <button onclick="switchTab('kb')" id="nav-kb" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-900">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>База знаний</span>
+                </button>
+                <button onclick="switchTab('proposal')" id="nav-proposal" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-900">
+                    <i data-lucide="calculator" class="w-4 h-4"></i>
+                    <span>Генератор КП</span>
+                </button>
+                <button onclick="switchTab('log')" id="nav-log" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-900"><i data-lucide="history" class="w-4 h-4"></i><span>Журнал</span></button>
+                <select id="org-filter" onchange="setOrg(this.value)" class="staff-only ml-auto flex-shrink-0 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-cyan-500"></select>
+            </div>
+        </div>
+    <div id="notif-panel" class="hidden absolute right-4 top-[4.75rem] w-[calc(100%-2rem)] sm:w-96 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 z-50">
+            <h4 class="font-semibold text-white text-sm flex items-center space-x-2"><i data-lucide="bell" class="w-4 h-4 text-amber-400"></i><span>Требует внимания</span></h4>
+            <div id="notif-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ================= 1. DASHBOARD VIEW ================= -->
+        <div id="view-dashboard" class="space-y-8 animate-fade-in">
+            <!-- Hero Welcome Card -->
+            <div class="relative overflow-hidden bg-gradient-to-r from-cyan-950/60 via-slate-900 to-indigo-950/60 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div class="space-y-2">
+                        <span id="hero-badge" class="text-xs uppercase tracking-widest text-cyan-400 font-bold px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full">Панель управления ИТ-инфраструктурой</span>
+                        <h1 id="hero-title" class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Добро пожаловать в ITAM ДевХард</h1>
+                        <p id="hero-desc" class="text-sm text-slate-300 max-w-2xl">Централизованный учет оборудования, токенов Авест, контроль гарантийных сроков и оперативная техническая поддержка клиентов в Кабинете 420.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="switchTab('inventory')" class="staff-only bg-cyan-600 hover:bg-cyan-500 text-white font-medium px-5 py-3 rounded-2xl text-sm shadow-lg shadow-cyan-950 transition-all flex items-center space-x-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>Добавить актив</span>
+                        </button>
+                        <button onclick="switchTab('tickets')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-5 py-3 rounded-2xl text-sm border border-slate-700 transition-all flex items-center space-x-2">
+                            <i data-lucide="life-buoy" class="w-4 h-4 text-indigo-400"></i>
+                            <span>Открыть тикеты</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:border-cyan-500/40 transition-all">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Всего активов</p>
+                        <h3 id="stat-total" class="text-3xl font-bold text-white mt-1">0</h3>
+                        <p class="text-xs text-cyan-400 mt-1 flex items-center"><i data-lucide="hard-drive" class="w-3 h-3 mr-1"></i> На балансе ИТ</p>
+                    </div>
+                    <div class="w-12 h-12 bg-cyan-500/10 border border-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400">
+                        <i data-lucide="server" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:border-emerald-500/40 transition-all">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Исправные активы</p>
+                        <h3 id="stat-active" class="text-3xl font-bold text-emerald-400 mt-1">0</h3>
+                        <p class="text-xs text-emerald-400/80 mt-1 flex items-center"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Готовы к работе</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:border-amber-500/40 transition-all">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Открытые тикеты</p>
+                        <h3 id="stat-open-tickets" class="text-3xl font-bold text-amber-400 mt-1">0</h3>
+                        <p class="text-xs text-amber-400/80 mt-1 flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1"></i> Требуют решения</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-amber-400">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:border-purple-500/40 transition-all">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Истекают гарантии</p>
+                        <h3 id="stat-expiring" class="text-3xl font-bold text-purple-400 mt-1">0</h3>
+                        <p class="text-xs text-purple-400/80 mt-1 flex items-center"><i data-lucide="calendar" class="w-3 h-3 mr-1"></i> В течение 30 дней</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-purple-400">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3"><h3 class="font-semibold text-white flex items-center space-x-2"><i data-lucide="pie-chart" class="w-5 h-5 text-cyan-400"></i><span>Активы по категориям</span></h3><div class="h-64"><canvas id="chart-assets"></canvas></div></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3"><h3 class="font-semibold text-white flex items-center space-x-2"><i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-400"></i><span>Заявки по статусам</span></h3><div class="h-64"><canvas id="chart-tickets"></canvas></div></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3"><h3 class="font-semibold text-white flex items-center space-x-2"><i data-lucide="bell-ring" class="w-5 h-5 text-amber-400"></i><span>Требует внимания</span></h3><div id="attention-list" class="space-y-2 max-h-64 overflow-y-auto"></div></div>
+            </div>
+
+            <!-- Recent Activity & Quick Shortcuts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Assets Preview -->
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-white flex items-center space-x-2">
+                            <i data-lucide="activity" class="w-5 h-5 text-cyan-400"></i>
+                            <span>Последние добавленные активы</span>
+                        </h3>
+                        <button onclick="switchTab('inventory')" class="text-xs text-cyan-400 hover:text-cyan-300 font-medium">Смотреть все →</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-xs font-semibold text-slate-400 uppercase border-b border-slate-800">
+                                    <th class="py-3 px-4">Категория</th>
+                                    <th class="py-3 px-4">Название</th>
+                                    <th class="py-3 px-4">Кабинет</th>
+                                    <th class="py-3 px-4">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-recent-assets" class="divide-y divide-slate-800/80 text-slate-300">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Quick Info & Contacts Box -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+                    <h3 class="font-semibold text-white flex items-center space-x-2">
+                        <i data-lucide="info" class="w-5 h-5 text-indigo-400"></i>
+                        <span>Служебная информация</span>
+                    </h3>
+                    <div class="space-y-3 text-sm text-slate-300">
+                        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-start space-x-3">
+                            <i data-lucide="shield" class="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-medium text-white">Техподдержка ДевХард</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Кабинет 420 открыт с 9:00 до 18:00 (Пн-Пт). Плановое обслуживание серверов каждую среду.</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-start space-x-3">
+                            <i data-lucide="key" class="w-5 h-5 text-indigo-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-medium text-white">ЭЦП Авест & Токены</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Своевременная замена ключей и продление сертификатов ГОС для налоговой и ЭДО.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('proposal')" class="staff-only w-full bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center justify-center space-x-2">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                        <span>Рассчитать стоимость услуг</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= 2. INVENTORY VIEW ================= -->
+        <div id="view-inventory" class="space-y-6 hidden animate-fade-in">
+            <!-- Controls & Actions Bar -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col lg:flex-row justify-between items-center gap-4 shadow-sm">
+                <!-- Search & Filters -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                    <div class="relative w-full sm:w-80">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </span>
+                        <input type="text" id="asset-search" oninput="renderAssets()" placeholder="Поиск по названию, инв. №, кабинету..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors">
+                    </div>
+
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <select id="filter-category" onchange="renderAssets()" class="w-full sm:w-auto bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-cyan-500">
+                            <option value="all">Все категории</option>
+                            <option value="ПК / Рабочая станция">ПК / Рабочая станция</option>
+                            <option value="Серверное оборудование">Серверное оборудование</option>
+                            <option value="Ключ Авест / Токен">Ключ Авест / Токен</option>
+                            <option value="Принтер / МФУ">Принтер / МФУ</option>
+                            <option value="Сетевое устройство">Сетевое устройство</option>
+                        </select>
+
+                        <select id="filter-status" onchange="renderAssets()" class="w-full sm:w-auto bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-cyan-500">
+                            <option value="all">Все статусы</option>
+                            <option value="Исправно">Исправно</option>
+                            <option value="В ремонте">В ремонте</option>
+                            <option value="Требует замены">Требует замены</option>
+                            <option value="Списано">Списано</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="staff-only flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-end">
+                    <button onclick="openCreateAssetModal()" class="bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Добавить актив</span>
+                    </button>
+                    <button onclick="exportData('csv')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3.5 py-2.5 rounded-xl text-sm transition-all flex items-center space-x-2 border border-slate-700">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Экспорт CSV</span>
+                    </button>
+                    <button onclick="exportData('json')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3.5 py-2.5 rounded-xl text-sm transition-all flex items-center space-x-2 border border-slate-700">
+                        <i data-lucide="file-code" class="w-4 h-4 text-cyan-400"></i>
+                        <span>Экспорт JSON</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Assets Inventory Table Container -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/80 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <th class="py-4 px-6">Категория</th>
+                                <th class="py-4 px-6">Название / Модель</th>
+                                <th class="py-4 px-6">Инв. № / Серийный</th>
+                                <th class="py-4 px-6">Кабинет / Ответственный</th>
+                                <th class="py-4 px-6">Статус</th>
+                                <th class="py-4 px-6">Гарантия / Лицензия</th>
+                                <th class="staff-only py-4 px-6 text-right">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assets-table-body" class="divide-y divide-slate-800/80 text-sm text-slate-300">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div id="assets-empty" class="hidden text-center py-20">
+                    <i data-lucide="hard-drive-download" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <h4 class="text-lg font-medium text-slate-300">Активы не найдены</h4>
+                    <p class="text-sm text-slate-500 mt-1">Измените параметры поиска или добавьте новый актив в базу ДевХард.</p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= 3. SERVICE DESK / TICKETS VIEW ================= -->
+        <div id="view-tickets" class="space-y-6 hidden animate-fade-in">
+            <!-- Tickets Header & Controls -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <i data-lucide="ticket" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Service Desk & Заявки</h2>
+                        <p class="text-xs text-slate-400">Управление запросами клиентов и техническими инцидентами</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                    <select id="filter-ticket-status" onchange="renderTickets()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-cyan-500">
+                        <option value="all">Все тикеты</option>
+                        <option value="Открыт">Открыт</option>
+                        <option value="В работе">В работе</option>
+                        <option value="Решен">Решен</option>
+                    </select>
+                    <button onclick="openCreateTicketModal()" class="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-medium px-4 py-2 rounded-xl text-sm shadow-md transition-all flex items-center space-x-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Создать тикет</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tickets Table / Cards -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/80 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <th class="py-4 px-6">ID / Тема</th>
+                                <th class="py-4 px-6">Заявитель / Каб.</th>
+                                <th class="py-4 px-6">Приоритет</th>
+                                <th class="py-4 px-6">Статус</th>
+                                <th class="py-4 px-6">Дата создания</th>
+                                <th class="staff-only py-4 px-6 text-right">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table-body" class="divide-y divide-slate-800/80 text-sm text-slate-300">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="tickets-empty" class="hidden text-center py-20">
+                    <i data-lucide="check-circle-2" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                    <h4 class="text-lg font-medium text-slate-300">Активных тикетов нет</h4>
+                    <p class="text-sm text-slate-500 mt-1">Все запросы клиентов успешно обработаны инженерами ДевХард.</p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= 4. KNOWLEDGE BASE VIEW ================= -->
+        <div id="view-kb" class="space-y-6 hidden animate-fade-in">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <i data-lucide="book-open" class="w-6 h-6 text-cyan-400"></i>
+                        <span>База знаний ДевХард</span>
+                    </h2>
+                    <p class="text-sm text-slate-400 mt-1">Инструкции по настройке ЭЦП Авест, подключению сетевых принтеров и администрированию.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div class="relative w-full sm:w-72">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </span>
+                        <input type="text" id="kb-search" oninput="renderKB()" placeholder="Поиск по статьям..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <button onclick="openCreateKbModal()" class="staff-only w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center justify-center space-x-2 flex-shrink-0">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Новая статья</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- KB Filter Tabs (All / Favorites) -->
+            <div class="flex space-x-2 border-b border-slate-800 pb-3">
+                <button onclick="setKbFilter('all')" id="kb-tab-all" class="px-4 py-2 rounded-xl text-sm font-medium transition-all bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center space-x-2">
+                    <i data-lucide="book" class="w-4 h-4"></i>
+                    <span>Все статьи</span>
+                </button>
+                <button onclick="setKbFilter('favorites')" id="kb-tab-favorites" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-900 flex items-center space-x-2">
+                    <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
+                    <span>Избранное</span>
+                    <span id="fav-count-badge" class="ml-1 text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">0</span>
+                </button>
+            </div>
+
+            <!-- KB Articles Grid -->
+            <div id="kb-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Populated by JS -->
+            </div>
+
+            <div id="kb-empty" class="hidden text-center py-20">
+                <i data-lucide="bookmark-x" class="w-12 h-12 text-slate-600 mx-auto mb-3"></i>
+                <h4 class="text-lg font-medium text-slate-300">Статьи не найдены</h4>
+                <p class="text-sm text-slate-500 mt-1">В данном разделе пока нет сохраненных или подходящих под поиск материалов.</p>
+            </div>
+        </div>
+
+
+        <!-- ================= 5. COMMERCIAL PROPOSAL GENERATOR ================= -->
+        <div id="view-proposal" class="space-y-6 hidden animate-fade-in">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <i data-lucide="calculator" class="w-6 h-6 text-cyan-400"></i>
+                        <span>Генератор коммерческих предложений (КП)</span>
+                    </h2>
+                    <p class="text-sm text-slate-400 mt-1">Рассчитайте стоимость ИТ-обслуживания и сформируйте готовый документ от ООО «ДевХард».</p>
+                </div>
+                <button onclick="generateProposalDoc()" class="bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center space-x-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span>Сформировать документ КП</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Calculator Parameters -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+                    <h3 class="font-semibold text-white text-base">Параметры расчета</h3>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Количество рабочих станций / ПК</label>
+                        <input type="number" id="calc-pcs" value="10" min="1" max="500" oninput="calculateProposal()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Количество серверов</label>
+                        <input type="number" id="calc-servers" value="2" min="0" max="50" oninput="calculateProposal()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Уровень SLA (срочность реагирования)</label>
+                        <select id="calc-sla" onchange="calculateProposal()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                            <option value="standard">Стандартный (до 4 часов)</option>
+                            <option value="express">Экспресс 24/7 (до 1 часа)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-800">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="calc-avest" checked onchange="calculateProposal()" class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-cyan-600 focus:ring-cyan-500">
+                            <span class="text-sm text-slate-300">Сопровождение ЭЦП Авест и токенов</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="calc-backup" checked onchange="calculateProposal()" class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-cyan-600 focus:ring-cyan-500">
+                            <span class="text-sm text-slate-300">Облачное резервное копирование (Backup)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Generated Proposal Preview -->
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-inner">
+                    <div class="flex justify-between items-start border-b border-slate-800 pb-5">
+                        <div>
+                            <span class="text-xs uppercase font-bold text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">Коммерческое предложение</span>
+                            <h3 class="text-2xl font-bold text-white mt-2">ООО «ДевХард» — ИТ-Аутсорсинг</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Дата формирования: <span id="proposal-date"></span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-slate-400">Итого в месяц:</p>
+                            <h2 id="proposal-total-price" class="text-3xl font-extrabold text-cyan-400 mt-0.5">0 BYN</h2>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 text-sm text-slate-300">
+                        <p>Настоящим коммерческим предложением ООО «ДевХард» (Каб. 420) подтверждает расчет стоимости комплексного абонентского обслуживания ИТ-инфраструктуры вашей организации:</p>
+                        
+                        <div class="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Обслуживание ПК (<span id="summary-pcs">10</span> шт.):</span>
+                                <span id="cost-pcs" class="font-semibold text-white">0 BYN</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Обслуживание серверов (<span id="summary-servers">2</span> шт.):</span>
+                                <span id="cost-servers" class="font-semibold text-white">0 BYN</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Коэффициент SLA:</span>
+                                <span id="cost-sla" class="font-semibold text-white">Стандарт</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Дополнительные опции (Авест + Backup):</span>
+                                <span id="cost-options" class="font-semibold text-white">0 BYN</span>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-slate-400 leading-relaxed">В стоимость входит выезд инженера в офис заказчика, оперативная диагностика, мониторинг доступности оборудования и консультации специалистов ДевХард.</p>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800 flex justify-end space-x-3">
+                        <button onclick="exportProposalText()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2.5 rounded-xl text-sm transition-all border border-slate-700 flex items-center space-x-2">
+                            <i data-lucide="copy" class="w-4 h-4 text-cyan-400"></i>
+                            <span>Копировать текст КП</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- ================= 6. ACTION LOG ================= -->
+        <div id="view-log" class="space-y-6 hidden animate-fade-in">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm flex justify-between items-center gap-4">
+                <div><h2 class="text-xl font-bold text-white flex items-center space-x-2"><i data-lucide="history" class="w-6 h-6 text-cyan-400"></i><span>Журнал действий</span></h2><p class="text-sm text-slate-400 mt-1">Кто и что делал в системе (последние 200 записей).</p></div>
+                <button onclick="clearLog()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-sm border border-slate-700 flex items-center space-x-2"><i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i><span>Очистить</span></button>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="bg-slate-950/80 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider"><th class="py-4 px-6">Время</th><th class="py-4 px-6">Пользователь</th><th class="py-4 px-6">Действие</th></tr></thead><tbody id="log-body" class="divide-y divide-slate-800/80 text-sm text-slate-300"></tbody></table></div></div>
+        </div>
+    </main>
+
+    <!-- Modal: Create / Edit Asset -->
+    <div id="asset-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <h3 id="modal-title" class="text-lg font-semibold text-white flex items-center space-x-2">
+                    <i data-lucide="hard-drive" class="w-5 h-5 text-cyan-400"></i>
+                    <span>Добавление нового ИТ-актива</span>
+                </h3>
+                <button onclick="closeModal('asset-modal')" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="asset-form" onsubmit="handleSaveAsset(event)" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <input type="hidden" id="asset-id">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Категория оборудования</label>
+                        <select id="form-category" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                            <option value="ПК / Рабочая станция">ПК / Рабочая станция</option>
+                            <option value="Серверное оборудование">Серверное оборудование</option>
+                            <option value="Ключ Авест / Токен">Ключ Авест / Токен</option>
+                            <option value="Принтер / МФУ">Принтер / МФУ</option>
+                            <option value="Сетевое устройство">Сетевое устройство</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Название / Модель</label>
+                        <input type="text" id="form-name" required placeholder="Например: Dell PowerEdge R350" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Инвентарный / Серийный номер</label>
+                        <input type="text" id="form-serial" required placeholder="Например: SN-998234-DH" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Кабинет / Отдел</label>
+                        <input type="text" id="form-room" required placeholder="Например: Каб. 420" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Статус</label>
+                        <select id="form-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                            <option value="Исправно">Исправно</option>
+                            <option value="В ремонте">В ремонте</option>
+                            <option value="Требует замены">Требует замены</option>
+                            <option value="Списано">Списано</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Срок окончания гарантии / лицензии</label>
+                        <input type="date" id="form-expiry" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Технические характеристики / Примечание</label>
+                    <textarea id="form-specs" rows="3" placeholder="Процессор, ОЗУ, накопители или детали ЭЦП..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+                </div>
+
+                <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('asset-modal')" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-all">Отмена</button>
+                    <button type="submit" class="bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm shadow-md transition-all">Сохранить актив</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Create / Edit Ticket -->
+    <div id="ticket-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-semibold text-white flex items-center space-x-2">
+                    <i data-lucide="ticket" class="w-5 h-5 text-indigo-400"></i>
+                    <span>Новая заявка Service Desk</span>
+                </h3>
+                <button onclick="closeModal('ticket-modal')" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="ticket-form" onsubmit="handleSaveTicket(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Тема обращения</label>
+                    <input type="text" id="ticket-title" required placeholder="Например: Не работает принтер в Каб. 108" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Заявитель / Кабинет</label>
+                        <input type="text" id="ticket-author" required placeholder="Бухгалтерия (Каб. 420)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Приоритет</label>
+                        <select id="ticket-priority" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                            <option value="Низкий">Низкий</option>
+                            <option value="Средний" selected>Средний</option>
+                            <option value="Высокий">Высокий</option>
+                            <option value="Критический">Критический</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Описание проблемы</label>
+                    <textarea id="ticket-desc" rows="3" required placeholder="Опишите симптомы и детали..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+                </div>
+                <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('ticket-modal')" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800">Отмена</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm shadow-md transition-all">Создать заявку</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: KB Article Reader (Full View) -->
+    <div id="kb-reader-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/50">
+                <div class="flex items-center space-x-2">
+                    <span id="reader-category" class="text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full">Категория</span>
+                    <span class="text-xs text-slate-500">• База знаний ДевХард</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="reader-fav-btn" onclick="toggleFavoriteFromReader()" class="text-slate-400 hover:text-amber-400 p-2 rounded-xl hover:bg-slate-800 transition-colors" title="В избранное">
+                        <i data-lucide="star" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="closeModal('kb-reader-modal')" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 sm:p-8 space-y-6 overflow-y-auto flex-grow text-slate-300">
+                <h2 id="reader-title" class="text-2xl font-bold text-white tracking-tight">Заголовок статьи</h2>
+                <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4 leading-relaxed text-sm sm:text-base">
+                    <p id="reader-content" class="whitespace-pre-line text-slate-300">Полный текст инструкции...</p>
+                </div>
+                <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/50 flex items-center justify-between text-xs text-slate-400">
+                    <span>Автор публикации: Инженеры ООО «ДевХард» (Каб. 420)</span>
+                    <span id="reader-date">Дата обновления</span>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center">
+                <button id="reader-delete-btn" onclick="" class="hidden text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3.5 py-2 rounded-xl transition-all flex items-center space-x-1.5">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span>Удалить статью</span>
+                </button>
+                <div class="ml-auto">
+                    <button onclick="closeModal('kb-reader-modal')" class="bg-slate-800 hover:bg-slate-700 text-white font-medium px-5 py-2 rounded-xl text-sm transition-all">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Create KB Article -->
+    <div id="kb-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-semibold text-white flex items-center space-x-2">
+                    <i data-lucide="book-plus" class="w-5 h-5 text-cyan-400"></i>
+                    <span>Новая статья базы знаний</span>
+                </h3>
+                <button onclick="closeModal('kb-modal')" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="kb-form" onsubmit="handleSaveKbArticle(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Категория</label>
+                    <input type="text" id="kb-form-category" required placeholder="Например: Безопасность и ЭЦП" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Заголовок статьи</label>
+                    <input type="text" id="kb-form-title" required placeholder="Например: Инструкция по перевыпуску ключа Авест" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Полный текст инструкции</label>
+                    <textarea id="kb-form-content" rows="6" required placeholder="Опишите подробно шаги настройки, ссылки, команды..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+                </div>
+                <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('kb-modal')" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800">Отмена</button>
+                    <button type="submit" class="bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm shadow-md transition-all">Опубликовать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- Application Logic -->
+    <script>
+        // Initial Mock Data
+        const defaultAssets = [
+            { id: 'DH-EQ-801', category: 'Серверное оборудование', name: 'Rack Server Dell PowerEdge R350', serial: 'SRV-DL-99214', room: 'Серверная (Каб. 420)', status: 'Исправно', expiry: '2027-05-15', specs: 'Intel Xeon E-2336, 32GB ECC RAM, RAID1.' },
+            { id: 'DH-EQ-802', category: 'Ключ Авест / Токен', name: 'AvToken USB (Налоговая ГОС)', serial: 'AVT-772910-BY', room: 'Каб. 420 (Бухгалтерия)', status: 'Исправно', expiry: '2026-10-25', specs: 'ЭЦП ГОС, действителен до конца октября 2026.' },
+            { id: 'DH-EQ-803', category: 'ПК / Рабочая станция', name: 'DevHard WorkStation Pro', serial: 'PC-DH-3021', room: 'Каб. 212', status: 'В ремонте', expiry: '2026-04-10', specs: 'AMD Ryzen 7 5700G, 16GB RAM. Замена кулера.' },
+            { id: 'DH-EQ-804', category: 'Принтер / МФУ', name: 'Kyocera ECOSYS M2040dn', serial: 'PRN-KC-5541', room: 'Каб. 108', status: 'Исправно', expiry: '2026-11-01', specs: 'Сетевой лазерный МФУ, дуплекс.' },
+            { id: 'DH-EQ-805', category: 'Сетевое устройство', name: 'MikroTik CCR2004-1G-12S+2XS', serial: 'MTK-NET-4491', room: 'Серверная (Каб. 420)', status: 'Исправно', expiry: '2028-01-20', specs: 'Core router 10G SFP+, RouterOS v7.' }
+        ];
+
+        const defaultTickets = [
+            { id: 'TKT-101', title: 'Настройка ЭЦП Авест для нового сотрудника', author: 'Отдел кадров (Каб. 204)', priority: 'Высокий', status: 'Открыт', date: '2026-09-28', desc: 'Установка корневых сертификатов на ПК нового бухгалтера.' },
+            { id: 'TKT-102', title: 'Профилактика и чистка кулеров сервера', author: 'Системный администратор', priority: 'Средний', status: 'В работе', date: '2026-09-27', desc: 'Плановое обслуживание стойки в Кабинете 420.' }
+        ];
+
+        const defaultKbArticles = [
+            { 
+                id: 1, 
+                title: 'Установка и настройка ЭЦП Авест (AvCrypt)', 
+                category: 'Безопасность и ЭЦП', 
+                desc: 'Пошаговое руководство по установке личных сертификатов, корневых ключей налоговой и настройке браузера для порталов электронного счета-фактуры.',
+                content: '1. Скачайте актуальный дистрибутив пакета Avest CSP с официального сайта.\n2. Установите драйверы для вашего USB-токена (AvToken).\n3. Запустите утилиту управления сертификатами и добавьте личный ключ из контейнера.\n4. Импортируйте корневые сертификаты НУЦ РБ в хранилище доверенных корневых центров сертификации.\n5. Настройте браузер (рекомендуется Chromium с расширением AvCm) для работы с торговыми площадками и налоговой.',
+                date: '2026-01-15'
+            },
+            { 
+                id: 2, 
+                title: 'Диагностика сетевого подключения (Ping & Traceroute)', 
+                category: 'Сети и Серверы', 
+                desc: 'Как проверить доступность хоста в локальной сети ООО ДевХард, анализ пингов и выявление сбоев маршрутизации MikroTik.',
+                content: 'Для проверки стабильности канала связи:\n• Откройте командную строку (cmd) или терминал.\n• Выполните команду ping [IP-адрес шлюза] -t для мониторинга потерь пакетов.\n• Для трассировки маршрута используйте tracert или mtr (на Linux).\n• При обнаружении высокого отклика проверьте нагрузку на маршрутизаторе MikroTik CCR2004 в серверной (Каб. 420).',
+                date: '2026-02-03'
+            },
+            { 
+                id: 3, 
+                title: 'Регламент техобслуживания ПК в Кабинете 420', 
+                category: 'ИТАМ Учет', 
+                desc: 'Периодичность продувки от пыли, проверка SMART дисков SSD/HDD и обновление термопасты на рабочих станциях разработчиков.',
+                content: 'Регламент обслуживания рабочих станций:\n• Каждые 6 месяцев производить комплексную очистку системных блоков от пыли сжатым воздухом.\n• Проверять здоровье накопителей через CrystalDiskInfo / smartctl.\n• Контролировать температурные режимы процессоров под нагрузкой.\n• При повышении температур выше 75°C выполнять замену термоинтерфейса (MX-4).',
+                date: '2026-03-10'
+            },
+            { 
+                id: 4, 
+                title: 'Резервное копирование баз данных (Backup Guide)', 
+                category: 'Серверное ПО', 
+                desc: 'Настройка ежедневного бэкапа ключевых баз в защищенное облачное хранилище ДевХард.',
+                content: 'Инструкция по бэкапам:\n1. Все базы данных PostgreSQL и MSSQL архивируются автоматически в 03:00 ночи.\n2. Архивы шифруются алгоритмом AES-256.\n3. Копии реплицируются на удаленный резервный сервер в Кабинете 420.\n4. Проверка целостности архивов проводится администратором еженедельно по понедельникам.',
+                date: '2026-04-20'
+            }
+        ];
+
+        let assets = [];
+        let tickets = [];
+        let kbArticles = [];
+        let favorites = []; // Array of article IDs
+        let currentKbFilter = 'all'; // 'all' or 'favorites'
+        let currentArticleId = null;
+
+
+        // ================= AUTH / ROLES =================
+        const TAB_ON = 'px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center space-x-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm';
+        const TAB_OFF = 'px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent';
+        const ACCOUNTS = {
+            staff: [
+                { login: 'admin', password: 'DevHard2026', name: 'Администратор ДевХард' },
+                { login: 'engineer', password: 'Eng2026', name: 'Инженер поддержки' }
+            ],
+            client: [
+                { login: 'buh', password: 'client123', name: 'Бухгалтерия', room: 'Каб. 420', keys: ['Бухгалтерия'] },
+                { login: 'hr', password: 'client123', name: 'Отдел кадров', room: 'Каб. 204', keys: ['Каб. 204', 'Отдел кадров'] },
+                { login: 'dev', password: 'client123', name: 'Отдел разработки', room: 'Каб. 212', keys: ['Каб. 212'] },
+                { login: 'office', password: 'client123', name: 'Офис / Приемная', room: 'Каб. 108', keys: ['Каб. 108'] }
+            ]
+        };
+        let currentUser = null;
+        let loginRole = 'client';
+        let heroDefaults = null;
+
+        const isStaff = () => !!currentUser && currentUser.role === 'staff';
+        const isClient = () => !!currentUser && currentUser.role === 'client';
+        const clientAuthor = () => `${currentUser.name} (${currentUser.room})`;
+
+        // ===== SUPABASE: вставьте свои данные из Project Settings -> Data API / API Keys =====
+        const SUPABASE_URL = 'https://mnekfdwlwwmmrkswddlv.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_WH8bNyZsYSwGzoSim_d9vw_OM5EjamQ';
+        const MAIL_DOMAIN = '@devhard.by'; // логин admin => admin@devhard.by (как в Authentication -> Users)
+        const sb = (window.supabase && SUPABASE_URL.startsWith('https://')) ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+        let orgs = [], cats = [];
+        const MAP = {
+            assets: { sel: '*, asset_categories(name)',
+                from: r => ({ id: r.id, category: r.asset_categories ? r.asset_categories.name : '', name: r.name, serial: r.serial, room: r.room, status: r.status, expiry: r.expiry, specs: r.specs, org: r.organization_id, owner: '' }),
+                to: o => ({ id: o.id, organization_id: o.org || null, category_id: (cats.find(c => c.name === o.category) || {}).id || null, name: o.name, serial: o.serial, room: o.room, status: o.status, expiry: o.expiry || null, specs: o.specs }) },
+            tickets: { sel: '*',
+                from: r => ({ id: r.id, title: r.title, author: r.author_name, priority: r.priority, status: r.status, date: r.created_on, desc: r.description, org: r.organization_id, owner: '' }),
+                to: o => ({ id: o.id, organization_id: o.org || null, title: o.title, author_name: o.author, priority: o.priority, status: o.status, created_on: o.date, description: o.desc }) },
+            kb_articles: { sel: '*',
+                from: r => ({ id: Number(r.id), title: r.title, category: r.category, desc: r.summary, content: r.content, date: r.published_on }),
+                to: o => ({ id: o.id, title: o.title, category: o.category, summary: o.desc, content: o.content, published_on: o.date }) }
+        };
+        const TBL = { assets: () => assets, tickets: () => tickets, kb_articles: () => kbArticles };
+        const SET = { assets: v => assets = v, tickets: v => tickets = v, kb_articles: v => kbArticles = v };
+        const known = { assets: [], tickets: [], kb_articles: [] };
+        async function pushTable(t) {
+            if (!sb || !currentUser) return;
+            const rows = TBL[t]().map(MAP[t].to), ids = rows.map(r => String(r.id));
+            let res;
+            if (isClient()) {
+                const fresh = rows.filter(r => !known[t].includes(String(r.id)));
+                if (fresh.length) res = await sb.from(t).insert(fresh);
+            } else {
+                if (rows.length) res = await sb.from(t).upsert(rows);
+                const del = known[t].filter(i => !ids.includes(i));
+                if (!(res && res.error) && del.length) res = await sb.from(t).delete().in('id', del);
+            }
+            if (res && res.error) { console.error(res.error); alert('Ошибка сохранения в базе: ' + res.error.message); }
+            pullAll();
+        }
+        async function pullAll() {
+            if (!sb || !currentUser) return;
+            let changed = false;
+            const o = await sb.from('organizations').select('*').order('name');
+            if (o.data && JSON.stringify(o.data) !== JSON.stringify(orgs)) { orgs = o.data; fillOrgSelect(); }
+            const c = await sb.from('asset_categories').select('*');
+            if (c.data) cats = c.data;
+            for (const t of Object.keys(TBL)) {
+                const { data, error } = await sb.from(t).select(MAP[t].sel).order('created_at', { ascending: false }).order('id');
+                if (error) { console.error(error); continue; }
+                const arr = data.map(MAP[t].from);
+                known[t] = data.map(r => String(r.id));
+                if (JSON.stringify(arr) !== JSON.stringify(TBL[t]())) { SET[t](arr); changed = true; }
+            }
+            if (isStaff()) {
+                const { data } = await sb.from('action_log').select('*').order('created_at', { ascending: false }).limit(200);
+                if (data) {
+                    const a = data.map(l => ({ t: new Date(l.created_at).toLocaleString('ru-RU'), u: `${l.user_name} (${l.user_role})`, a: l.action }));
+                    if (JSON.stringify(a) !== JSON.stringify(actionLog)) { actionLog = a; changed = true; }
+                }
+            }
+            if (changed) { renderAll(); renderLog(); }
+        }
+        function fillOrgSelect() {
+            const l = sb ? orgs.map(o => [o.id, o.name, o.room]) : ACCOUNTS.client.map(c => [c.login, c.name, c.room]);
+            const el = document.getElementById('org-filter');
+            el.innerHTML = '<option value="all">Все организации</option>' + l.map(([v, n, r]) => `<option value="${v}">${n} (${r})</option>`).join('');
+            el.value = orgFilter;
+        }
+        async function startSession(uid) {
+            const { data: p, error } = await sb.from('profiles').select('login, full_name, role, organization_id, organizations(name, room)').eq('id', uid).single();
+            if (error || !p) return false;
+            currentUser = { id: uid, login: p.login, name: p.full_name, role: p.role === 'client' ? 'client' : 'staff', staffRole: p.role, org: p.organization_id, room: p.organizations ? p.organizations.room : '', keys: [] };
+            return true;
+        }
+
+        let orgFilter = 'all';
+        let charts = {};
+        let actionLog = JSON.parse(localStorage.getItem('devhard_itam_log') || '[]');
+        const ROLE_UI = {
+            client: { t: 'Портал клиента', d: 'Для сотрудников организаций-клиентов: оборудование, заявки, инструкции.', i: 'users', c: 'indigo' },
+            staff: { t: 'Панель ИТ-отдела', d: 'Для инженеров и администраторов ДевХард: учет, аналитика, управление.', i: 'shield', c: 'cyan' }
+        };
+        const matchAcc = (acc, txt) => acc.keys.some(k => (txt || '').includes(k));
+        function scoped(list, f) {
+            if (!isClient() && !isStaff()) return [];
+            if (sb) return (isStaff() && orgFilter !== 'all') ? list.filter(x => x.org === orgFilter) : list;
+            const o = isClient() ? currentUser : (orgFilter !== 'all' ? ACCOUNTS.client.find(c => c.login === orgFilter) : null);
+            return o ? list.filter(x => x.owner === o.login || matchAcc(o, x[f])) : list;
+        }
+        const visibleAssets = () => scoped(assets, 'room');
+        const visibleTickets = () => scoped(tickets, 'author');
+
+        function renderLogin() {
+            document.getElementById('login-blocks').innerHTML = ['client', 'staff'].map(r => { const u = ROLE_UI[r]; return `
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4 hover:border-${u.c}-500/40 transition-all">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-11 h-11 rounded-xl bg-${u.c}-500/10 border border-${u.c}-500/20 flex items-center justify-center text-${u.c}-400 flex-shrink-0"><i data-lucide="${u.i}" class="w-5 h-5"></i></div>
+                        <div><h2 class="text-lg font-bold text-white">${u.t}</h2><p class="text-xs text-slate-400">${u.d}</p></div>
+                    </div>
+                    <form onsubmit="handleLogin(event,'${r}')" class="space-y-3">
+                        <input type="text" id="lu-${r}" required autocomplete="username" placeholder="Логин" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                        <input type="password" id="lp-${r}" required autocomplete="current-password" placeholder="Пароль" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                        <div id="le-${r}" class="hidden text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2">Неверный логин или пароль.</div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-medium py-2.5 rounded-xl text-sm shadow-md transition-all flex items-center justify-center space-x-2"><i data-lucide="log-in" class="w-4 h-4"></i><span>Войти</span></button>
+                    </form>
+                </div>`; }).join('');
+            lucide.createIcons();
+        }
+        async function handleLogin(e, role) {
+            e.preventDefault();
+            const l = document.getElementById('lu-' + role).value.trim(), p = document.getElementById('lp-' + role).value;
+            const fail = () => document.getElementById('le-' + role).classList.remove('hidden');
+            if (sb) {
+                const { data, error } = await sb.auth.signInWithPassword({ email: l.toLowerCase() + MAIL_DOMAIN, password: p });
+                if (error || !(await startSession(data.user.id)) || currentUser.role !== role) { currentUser = null; await sb.auth.signOut(); return fail(); }
+                loginRole = role; enterApp(); showToast(`Добро пожаловать, ${currentUser.name}`, 'success');
+                return;
+            }
+            const acc = ACCOUNTS[role].find(a => a.login === l && a.password === p);
+            if (!acc) return fail();
+            const { password, ...user } = acc;
+            currentUser = { role, ...user };
+            loginRole = role;
+            sessionStorage.setItem('devhard_itam_session', JSON.stringify({ role, login: acc.login }));
+            enterApp();
+            showToast(`Добро пожаловать, ${currentUser.name}`, 'success');
+        }
+
+        // Notifications, charts, log, organizations
+        function getAlerts() {
+            const now = new Date(), out = [];
+            visibleAssets().forEach(a => {
+                if (!a.expiry || a.status === 'Списано') return;
+                const d = Math.ceil((new Date(a.expiry) - now) / 864e5);
+                if (d < 0) out.push({ c: 'red', i: 'alert-triangle', t: `${a.name}: срок истёк ${a.expiry}` });
+                else if (d <= 30) out.push({ c: 'purple', i: 'calendar', t: `${a.name}: истекает через ${d} дн.` });
+            });
+            visibleTickets().forEach(t => { if (t.status !== 'Решен' && (t.priority === 'Высокий' || t.priority === 'Критический')) out.push({ c: 'amber', i: 'ticket', t: `${t.id}: ${t.title} (${t.priority})` }); });
+            return out;
+        }
+        function renderAlerts() {
+            const al = getAlerts();
+            const html = al.length ? al.map(x => `<div class="flex items-start space-x-2.5 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300"><i data-lucide="${x.i}" class="w-4 h-4 text-${x.c}-400 flex-shrink-0 mt-0.5"></i><span>${x.t}</span></div>`).join('') : '<p class="text-xs text-slate-500 text-center py-4">Всё в порядке — уведомлений нет</p>';
+            ['notif-list', 'attention-list'].forEach(id => document.getElementById(id).innerHTML = html);
+            const b = document.getElementById('notif-badge');
+            b.innerText = al.length; b.classList.toggle('hidden', !al.length);
+            lucide.createIcons();
+        }
+        function toggleNotif() { document.getElementById('notif-panel').classList.toggle('hidden'); }
+        function mkChart(id, type, labels, data, colors) {
+            if (charts[id]) charts[id].destroy();
+            const tick = { color: '#94a3b8' };
+            charts[id] = new Chart(document.getElementById(id), { type, data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0, borderRadius: 6 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: type === 'doughnut', labels: { color: '#cbd5e1' } } },
+                    scales: type === 'bar' ? { x: { ticks: tick, grid: { display: false } }, y: { beginAtZero: true, ticks: { ...tick, precision: 0 }, grid: { color: '#1e293b' } } } : {} } });
+        }
+        function renderCharts() {
+            if (!window.Chart) return;
+            const cats = {}, st = { 'Открыт': 0, 'В работе': 0, 'Решен': 0 };
+            visibleAssets().forEach(a => cats[a.category] = (cats[a.category] || 0) + 1);
+            visibleTickets().forEach(t => st[t.status] = (st[t.status] || 0) + 1);
+            mkChart('chart-assets', 'doughnut', Object.keys(cats), Object.values(cats), ['#06b6d4', '#6366f1', '#10b981', '#f59e0b', '#a855f7']);
+            mkChart('chart-tickets', 'bar', Object.keys(st), Object.values(st), ['#06b6d4', '#f59e0b', '#10b981']);
+        }
+        function logAction(t) {
+            if (!currentUser) return;
+            actionLog.unshift({ t: new Date().toLocaleString('ru-RU'), u: `${currentUser.name} (${isStaff() ? 'ИТ-отдел' : 'клиент'})`, a: t });
+            actionLog = actionLog.slice(0, 200);
+            if (sb) sb.from('action_log').insert({ user_name: currentUser.name, user_role: isStaff() ? 'ИТ-отдел' : 'клиент', action: t }).then(r => r.error && console.error(r.error));
+            localStorage.setItem('devhard_itam_log', JSON.stringify(actionLog));
+            renderLog();
+        }
+        function renderLog() {
+            document.getElementById('log-body').innerHTML = actionLog.map(l => `<tr class="hover:bg-slate-800/50"><td class="py-3 px-6 text-xs text-slate-400 whitespace-nowrap">${l.t}</td><td class="py-3 px-6 text-white">${l.u}</td><td class="py-3 px-6">${l.a}</td></tr>`).join('');
+        }
+        function clearLog() { if (!isStaff() || !confirm('Очистить журнал действий?')) return; actionLog = []; localStorage.setItem('devhard_itam_log', '[]'); if (sb) sb.from('action_log').delete().gte('created_at', '1970-01-01'); renderLog(); }
+        function setOrg(v) { orgFilter = v; renderAll(); }
+
+        function enterApp() {
+            const client = isClient();
+            if (!heroDefaults) heroDefaults = ['hero-badge', 'hero-title', 'hero-desc'].map(id => document.getElementById(id).innerText);
+            document.body.classList.remove('locked');
+            document.body.classList.toggle('role-client', client);
+            document.getElementById('login-screen').classList.add('hidden');
+
+            document.getElementById('user-chip-name').innerText = currentUser.name;
+            const roleEl = document.getElementById('user-chip-role');
+            roleEl.innerText = client ? 'Клиент · ' + currentUser.room : 'ИТ-отдел';
+            roleEl.className = 'text-[10px] font-semibold ' + (client ? 'text-indigo-400' : 'text-cyan-400');
+
+            document.getElementById('nav-proposal').style.display = client ? 'none' : '';
+            document.getElementById('nav-log').style.display = client ? 'none' : '';
+            document.getElementById('nav-inventory-label').innerText = client ? 'Мои активы' : 'Учет активов';
+            document.getElementById('nav-tickets-label').innerText = client ? 'Мои заявки' : 'Service Desk';
+
+            document.getElementById('hero-badge').innerText = client ? 'Портал клиента' : heroDefaults[0];
+            document.getElementById('hero-title').innerText = client ? 'Здравствуйте, ' + currentUser.name : heroDefaults[1];
+            document.getElementById('hero-desc').innerText = client
+                ? 'Здесь вы можете следить за своим оборудованием, сроками гарантий и лицензий, создавать заявки в техподдержку и читать инструкции ДевХард.'
+                : heroDefaults[2];
+
+            orgFilter = 'all';
+            if (sb) { assets = []; tickets = []; kbArticles = []; pullAll(); }
+            fillOrgSelect();
+            renderLog();
+            renderAll();
+            switchTab('dashboard');
+            lucide.createIcons();
+        }
+
+        function logout() {
+            logAction('Выход из системы');
+            if (sb) { sb.auth.signOut(); assets = []; tickets = []; kbArticles = []; }
+            sessionStorage.removeItem('devhard_itam_session');
+            currentUser = null;
+            document.getElementById('notif-panel').classList.add('hidden');
+            ['asset-modal', 'ticket-modal', 'kb-modal', 'kb-reader-modal'].forEach(id => closeModal(id));
+            document.body.classList.add('locked');
+            document.body.classList.remove('role-client');
+            document.getElementById('login-screen').classList.remove('hidden');
+            renderLogin();
+        }
+
+        function initAuth() {
+            renderLogin();
+            if (sb) { sb.auth.getSession().then(async ({ data }) => { if (data.session && await startSession(data.session.user.id)) { loginRole = currentUser.role; enterApp(); } }); return; }
+            try {
+                const ses = JSON.parse(sessionStorage.getItem('devhard_itam_session') || 'null');
+                const acc = ses && ACCOUNTS[ses.role] && ACCOUNTS[ses.role].find(a => a.login === ses.login);
+                if (acc) {
+                    const { password, ...user } = acc;
+                    currentUser = { role: ses.role, ...user };
+                    loginRole = ses.role;
+                    enterApp();
+                }
+            } catch (e) { /* no valid session */ }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStorage();
+            document.getElementById('proposal-date').innerText = new Date().toLocaleDateString('ru-RU');
+            lucide.createIcons();
+            renderAll();
+            calculateProposal();
+            const lab = t => { const h = [...t.querySelectorAll('thead th')].map(x => x.textContent.trim()); t.querySelectorAll('tbody tr').forEach(r => [...r.children].forEach((c, i) => c.setAttribute('data-label', h[i] || ''))); };
+            document.querySelectorAll('table').forEach(t => { t.classList.add('rt'); new MutationObserver(() => lab(t)).observe(t.tBodies[0], { childList: true }); lab(t); });
+            initAuth();
+            pullAll();
+            setInterval(pullAll, 10000);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) pullAll(); });
+        });
+
+        function loadStorage() {
+            const savedAssets = localStorage.getItem('devhard_itam_assets');
+            assets = savedAssets ? JSON.parse(savedAssets) : defaultAssets;
+
+            const savedTickets = localStorage.getItem('devhard_itam_tickets');
+            tickets = savedTickets ? JSON.parse(savedTickets) : defaultTickets;
+
+            const savedKb = localStorage.getItem('devhard_itam_kb');
+            kbArticles = savedKb ? JSON.parse(savedKb) : defaultKbArticles;
+
+            const savedFavs = localStorage.getItem('devhard_itam_favs');
+            favorites = savedFavs ? JSON.parse(savedFavs) : [1];
+        }
+
+        function saveAssets() {
+            localStorage.setItem('devhard_itam_assets', JSON.stringify(assets));
+            pushTable('assets');
+        }
+
+        function saveTickets() {
+            localStorage.setItem('devhard_itam_tickets', JSON.stringify(tickets));
+            pushTable('tickets');
+        }
+
+        function saveKb() {
+            localStorage.setItem('devhard_itam_kb', JSON.stringify(kbArticles));
+            pushTable('kb_articles');
+        }
+
+        function saveFavorites() {
+            localStorage.setItem('devhard_itam_favs', JSON.stringify(favorites));
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            if ((tabId === 'proposal' || tabId === 'log') && !isStaff()) return;
+            document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-900";
+            });
+
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.className = "tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm";
+
+            lucide.createIcons();
+            if (tabId === 'kb') renderKB();
+        }
+
+        function renderAll() {
+            renderStats();
+            renderAssets();
+            renderTickets();
+            renderDashboardRecent();
+            renderKB();
+        }
+
+        // Dashboard Stats
+        function renderStats() {
+            const myAssets = visibleAssets();
+            const total = myAssets.length;
+            const active = myAssets.filter(a => a.status === 'Исправно').length;
+            const openTicketsCount = visibleTickets().filter(t => t.status !== 'Решен').length;
+
+            const now = new Date();
+            const thirtyDays = new Date();
+            thirtyDays.setDate(now.getDate() + 30);
+
+            const expiring = myAssets.filter(a => {
+                if (!a.expiry) return false;
+                const d = new Date(a.expiry);
+                return d >= now && d <= thirtyDays;
+            }).length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-active').innerText = active;
+            document.getElementById('stat-open-tickets').innerText = openTicketsCount;
+            document.getElementById('stat-expiring').innerText = expiring;
+            renderAlerts();
+            renderCharts();
+        }
+
+        function renderDashboardRecent() {
+            const tbody = document.getElementById('dashboard-recent-assets');
+            tbody.innerHTML = visibleAssets().slice(0, 4).map(a => `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="py-3 px-4 font-mono text-xs text-cyan-400">${a.category}</td>
+                    <td class="py-3 px-4 font-medium text-white">${a.name}</td>
+                    <td class="py-3 px-4 text-slate-400">${a.room}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${a.status === 'Исправно' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${a.status}</span></td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // Assets Management
+        function renderAssets() {
+            const search = document.getElementById('asset-search').value.toLowerCase();
+            const cat = document.getElementById('filter-category').value;
+            const stat = document.getElementById('filter-status').value;
+
+            const tbody = document.getElementById('assets-table-body');
+            const empty = document.getElementById('assets-empty');
+
+            const filtered = visibleAssets().filter(a => {
+                const matchS = a.name.toLowerCase().includes(search) || a.serial.toLowerCase().includes(search) || a.room.toLowerCase().includes(search);
+                const matchC = cat === 'all' || a.category === cat;
+                const matchSt = stat === 'all' || a.status === stat;
+                return matchS && matchC && matchSt;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            const now = new Date();
+            const thirtyDays = new Date();
+            thirtyDays.setDate(now.getDate() + 30);
+
+            tbody.innerHTML = filtered.map(a => {
+                let badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">Исправно</span>';
+                if (a.status === 'В ремонте') badge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">В ремонте</span>';
+                else if (a.status === 'Требует замены') badge = '<span class="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">Требует замены</span>';
+                else if (a.status === 'Списано') badge = '<span class="bg-slate-700 text-slate-300 px-2.5 py-1 rounded-full text-xs font-semibold">Списано</span>';
+
+                let expHtml = `<span class="text-slate-400">${a.expiry || '-'}</span>`;
+                if (a.expiry) {
+                    const d = new Date(a.expiry);
+                    if (d < now) expHtml = `<span class="text-red-400 font-medium">Просрочено (${a.expiry})</span>`;
+                    else if (d <= thirtyDays) expHtml = `<span class="text-purple-400 font-medium">Истекает (${a.expiry})</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-800/50 transition-colors">
+                        <td class="py-4 px-6"><span class="text-xs bg-slate-950 border border-slate-800 px-2 py-1 rounded text-cyan-400">${a.category}</span></td>
+                        <td class="py-4 px-6 font-semibold text-white">${a.name}<div class="text-xs text-slate-500 font-mono">${a.id}</div></td>
+                        <td class="py-4 px-6 font-mono text-xs text-slate-300">${a.serial}</td>
+                        <td class="py-4 px-6 text-slate-300">${a.room}</td>
+                        <td class="py-4 px-6">${badge}</td>
+                        <td class="py-4 px-6 text-xs">${expHtml}</td>
+                        ${isStaff() ? `<td class="py-4 px-6 text-right space-x-1">
+                            <button onclick="openEditAssetModal('${a.id}')" class="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Редактировать"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteAsset('${a.id}')" class="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Удалить"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>` : ''}
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function openCreateAssetModal() {
+            if (!isStaff()) return;
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="hard-drive" class="w-5 h-5 text-cyan-400"></i><span>Добавление ИТ-актива</span>`;
+            document.getElementById('asset-form').reset();
+            document.getElementById('asset-id').value = '';
+            const nextYr = new Date(); nextYr.setFullYear(nextYr.getFullYear() + 1);
+            document.getElementById('form-expiry').value = nextYr.toISOString().split('T')[0];
+            document.getElementById('asset-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function openEditAssetModal(id) {
+            if (!isStaff()) return;
+            const a = assets.find(x => x.id === id);
+            if (!a) return;
+            document.getElementById('modal-title').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-indigo-400"></i><span>Редактирование: ${a.id}</span>`;
+            document.getElementById('asset-id').value = a.id;
+            document.getElementById('form-category').value = a.category;
+            document.getElementById('form-name').value = a.name;
+            document.getElementById('form-serial').value = a.serial;
+            document.getElementById('form-room').value = a.room;
+            document.getElementById('form-status').value = a.status;
+            document.getElementById('form-expiry').value = a.expiry || '';
+            document.getElementById('form-specs').value = a.specs || '';
+            document.getElementById('asset-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function handleSaveAsset(e) {
+            if (!isStaff()) { e.preventDefault(); return; }
+            e.preventDefault();
+            const idVal = document.getElementById('asset-id').value;
+            const category = document.getElementById('form-category').value;
+            const name = document.getElementById('form-name').value;
+            const serial = document.getElementById('form-serial').value;
+            const room = document.getElementById('form-room').value;
+            const status = document.getElementById('form-status').value;
+            const expiry = document.getElementById('form-expiry').value;
+            const specs = document.getElementById('form-specs').value;
+
+            if (idVal) {
+                const idx = assets.findIndex(x => x.id === idVal);
+                if (idx !== -1) assets[idx] = { ...assets[idx], category, name, serial, room, status, expiry, specs };
+                showToast(`Актив ${idVal} успешно обновлен`, 'success');
+            } else {
+                const newA = { id: 'DH-EQ-' + Math.floor(1000 + Math.random() * 9000), category, name, serial, room, status, expiry, specs, owner: orgFilter !== 'all' ? orgFilter : '', org: isClient() ? currentUser.org : (orgFilter !== 'all' ? orgFilter : null) };
+                assets.unshift(newA);
+                showToast('Новый актив добавлен в систему', 'success');
+            }
+            saveAssets();
+            closeModal('asset-modal');
+            renderAll();
+        }
+
+        function deleteAsset(id) {
+            if (!isStaff()) return;
+            if (confirm('Вы действительно хотите удалить этот актив?')) {
+                assets = assets.filter(x => x.id !== id);
+                saveAssets();
+                renderAll();
+                showToast('Актив удален', 'info');
+            }
+        }
+
+        // Service Desk / Tickets Management
+        function renderTickets() {
+            const statusFilter = document.getElementById('filter-ticket-status').value;
+            const tbody = document.getElementById('tickets-table-body');
+            const empty = document.getElementById('tickets-empty');
+
+            const filtered = visibleTickets().filter(t => statusFilter === 'all' || t.status === statusFilter);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            tbody.innerHTML = filtered.map(t => {
+                let pBadge = '<span class="text-slate-400">Низкий</span>';
+                if (t.priority === 'Средний') pBadge = '<span class="text-cyan-400 font-medium">Средний</span>';
+                else if (t.priority === 'Высокий') pBadge = '<span class="text-amber-400 font-medium">Высокий</span>';
+                else if (t.priority === 'Критический') pBadge = '<span class="text-red-400 font-bold">Критический</span>';
+
+                let sBadge = '<span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">Открыт</span>';
+                if (t.status === 'В работе') sBadge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">В работе</span>';
+                else if (t.status === 'Решен') sBadge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">Решен</span>';
+
+                return `
+                    <tr class="hover:bg-slate-800/50 transition-colors">
+                        <td class="py-4 px-6 font-semibold text-white">${t.title}<div class="text-xs text-slate-500 font-mono">${t.id}</div></td>
+                        <td class="py-4 px-6 text-slate-300">${t.author}</td>
+                        <td class="py-4 px-6">${pBadge}</td>
+                        <td class="py-4 px-6">${sBadge}</td>
+                        <td class="py-4 px-6 text-xs text-slate-400">${t.date}</td>
+                        ${isStaff() ? `<td class="py-4 px-6 text-right space-x-1">
+                            <button onclick="cycleTicketStatus('${t.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors">Статус</button>
+                            <button onclick="deleteTicket('${t.id}')" class="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>` : ''}
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function openCreateTicketModal() {
+            document.getElementById('ticket-form').reset();
+            const au = document.getElementById('ticket-author');
+            au.readOnly = isClient();
+            au.classList.toggle('opacity-70', isClient());
+            if (isClient()) au.value = clientAuthor();
+            document.getElementById('ticket-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function handleSaveTicket(e) {
+            e.preventDefault();
+            const title = document.getElementById('ticket-title').value;
+            const author = isClient() ? clientAuthor() : document.getElementById('ticket-author').value;
+            const priority = document.getElementById('ticket-priority').value;
+            const desc = document.getElementById('ticket-desc').value;
+
+            const newT = {
+                id: 'TKT-' + Math.floor(100 + Math.random() * 900),
+                title,
+                author,
+                priority,
+                status: 'Открыт',
+                date: new Date().toISOString().split('T')[0],
+                desc,
+                owner: currentUser ? currentUser.login : '',
+                org: isClient() ? currentUser.org : (orgFilter !== 'all' ? orgFilter : null)
+            };
+
+            tickets.unshift(newT);
+            saveTickets();
+            closeModal('ticket-modal');
+            renderAll();
+            showToast('Новый тикет успешно создан', 'success');
+        }
+
+        function cycleTicketStatus(id) {
+            if (!isStaff()) return;
+            const t = tickets.find(x => x.id === id);
+            if (!t) return;
+            if (t.status === 'Открыт') t.status = 'В работе';
+            else if (t.status === 'В работе') t.status = 'Решен';
+            else t.status = 'Открыт';
+            saveTickets();
+            renderAll();
+            showToast(`Статус заявки ${id} изменен на "${t.status}"`, 'info');
+        }
+
+        function deleteTicket(id) {
+            if (!isStaff()) return;
+            if (confirm('Удалить эту заявку?')) {
+                tickets = tickets.filter(x => x.id !== id);
+                saveTickets();
+                renderAll();
+                showToast('Заявка удалена', 'info');
+            }
+        }
+
+        // Knowledge Base Management
+        function setKbFilter(filter) {
+            currentKbFilter = filter;
+            const btnAll = document.getElementById('kb-tab-all');
+            const btnFav = document.getElementById('kb-tab-favorites');
+
+            if (filter === 'all') {
+                btnAll.className = "px-4 py-2 rounded-xl text-sm font-medium transition-all bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center space-x-2";
+                btnFav.className = "px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-900 flex items-center space-x-2";
+            } else {
+                btnFav.className = "px-4 py-2 rounded-xl text-sm font-medium transition-all bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center space-x-2";
+                btnAll.className = "px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-900 flex items-center space-x-2";
+            }
+            renderKB();
+        }
+
+        function renderKB() {
+            const search = document.getElementById('kb-search').value.toLowerCase();
+            const grid = document.getElementById('kb-grid');
+            const empty = document.getElementById('kb-empty');
+
+            document.getElementById('fav-count-badge').innerText = favorites.length;
+
+            let filtered = kbArticles.filter(art => {
+                const matchSearch = art.title.toLowerCase().includes(search) || art.desc.toLowerCase().includes(search) || art.category.toLowerCase().includes(search);
+                if (currentKbFilter === 'favorites') {
+                    return matchSearch && favorites.includes(art.id);
+                }
+                return matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(art => {
+                const isFav = favorites.includes(art.id);
+                return `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between hover:border-cyan-500/40 transition-all shadow-sm relative group">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-full">${art.category}</span>
+                                <button onclick="toggleFavorite(${art.id}, event)" class="text-slate-500 hover:text-amber-400 transition-colors p-1" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">
+                                    <i data-lucide="star" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
+                                </button>
+                            </div>
+                            <h3 class="text-base font-bold text-white mt-3">${art.title}</h3>
+                            <p class="text-xs text-slate-400 mt-2 leading-relaxed line-clamp-3">${art.desc}</p>
+                        </div>
+                        <div class="pt-4 mt-4 border-t border-slate-800 flex justify-between items-center text-xs">
+                            <span class="text-slate-500">${art.date || '2026'}</span>
+                            <button onclick="openKbReader(${art.id})" class="text-cyan-400 hover:text-cyan-300 font-medium flex items-center space-x-1">
+                                <span>Читать полностью</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function toggleFavorite(id, event) {
+            if (event) event.stopPropagation();
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(x => x !== id);
+                showToast('Статья удалена из избранного', 'info');
+            } else {
+                favorites.push(id);
+                showToast('Статья добавлена в избранное', 'success');
+            }
+            saveFavorites();
+            renderKB();
+        }
+
+        function openKbReader(id) {
+            const art = kbArticles.find(x => x.id === id);
+            if (!art) return;
+            currentArticleId = art.id;
+
+            document.getElementById('reader-category').innerText = art.category;
+            document.getElementById('reader-title').innerText = art.title;
+            document.getElementById('reader-content').innerText = art.content || art.desc;
+            document.getElementById('reader-date').innerText = 'Дата публикации: ' + (art.date || '2026-01-01');
+
+            // Update star icon in reader
+            const isFav = favorites.includes(art.id);
+            const favBtn = document.getElementById('reader-fav-btn');
+            favBtn.innerHTML = `<i data-lucide="star" class="w-5 h-5 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>`;
+
+            // Allow delete if custom or any
+            const delBtn = document.getElementById('reader-delete-btn');
+            delBtn.classList.toggle('hidden', !isStaff());
+            delBtn.setAttribute('onclick', `deleteKbArticle(${art.id})`);
+
+            document.getElementById('kb-reader-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function toggleFavoriteFromReader() {
+            if (!currentArticleId) return;
+            toggleFavorite(currentArticleId);
+            openKbReader(currentArticleId); // refresh icon
+        }
+
+        function openCreateKbModal() {
+            if (!isStaff()) return;
+            document.getElementById('kb-form').reset();
+            document.getElementById('kb-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function handleSaveKbArticle(e) {
+            if (!isStaff()) { e.preventDefault(); return; }
+            e.preventDefault();
+            const category = document.getElementById('kb-form-category').value;
+            const title = document.getElementById('kb-form-title').value;
+            const content = document.getElementById('kb-form-content').value;
+
+            const newArt = {
+                id: Date.now(),
+                category,
+                title,
+                desc: content.substring(0, 120) + '...',
+                content,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            kbArticles.unshift(newArt);
+            saveKb();
+            closeModal('kb-modal');
+            renderKB();
+            showToast('Новая статья успешно опубликована', 'success');
+        }
+
+        function deleteKbArticle(id) {
+            if (!isStaff()) return;
+            if (confirm('Вы действительно хотите удалить эту статью из базы знаний?')) {
+                kbArticles = kbArticles.filter(x => x.id !== id);
+                favorites = favorites.filter(x => x !== id);
+                saveKb();
+                saveFavorites();
+                closeModal('kb-reader-modal');
+                renderKB();
+                showToast('Статья удалена', 'info');
+            }
+        }
+
+        // Proposal Calculator
+        function calculateProposal() {
+            const pcs = parseInt(document.getElementById('calc-pcs').value) || 0;
+            const servers = parseInt(document.getElementById('calc-servers').value) || 0;
+            const sla = document.getElementById('calc-sla').value;
+            const avest = document.getElementById('calc-avest').checked;
+            const backup = document.getElementById('calc-backup').checked;
+
+            const costPcs = pcs * 15; // 15 BYN per PC
+            const costServers = servers * 120; // 120 BYN per server
+            let slaMultiplier = sla === 'express' ? 1.4 : 1.0;
+            
+            let optionsCost = 0;
+            if (avest) optionsCost += 40;
+            if (backup) optionsCost += 60;
+
+            const total = Math.round((costPcs + costServers + optionsCost) * slaMultiplier);
+
+            document.getElementById('summary-pcs').innerText = pcs;
+            document.getElementById('summary-servers').innerText = servers;
+            document.getElementById('cost-pcs').innerText = costPcs + ' BYN';
+            document.getElementById('cost-servers').innerText = costServers + ' BYN';
+            document.getElementById('cost-sla').innerText = sla === 'express' ? 'Экспресс 24/7 (x1.4)' : 'Стандарт (x1.0)';
+            document.getElementById('cost-options').innerText = optionsCost + ' BYN';
+            document.getElementById('proposal-total-price').innerText = total + ' BYN';
+        }
+
+        function generateProposalDoc() {
+            showToast('Коммерческое предложение успешно сформировано и готово к отправке', 'success');
+        }
+
+        function exportProposalText() {
+            const total = document.getElementById('proposal-total-price').innerText;
+            const text = `КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ ООО «ДевХард»\nИТ-Аутсорсинг и поддержка\nИтоговая стоимость: ${total}\nКонтакты: Каб. 420, +375 (33) 346-79-87`;
+            const dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast('Текст КП скопирован в буфер обмена', 'success');
+        }
+
+        // Export CSV / JSON
+        function exportData(format) {
+            if (!isStaff()) return;
+            if (format === 'json') {
+                const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(assets, null, 2));
+                const a = document.createElement('a');
+                a.setAttribute("href", str);
+                a.setAttribute("download", "devhard_itam_export.json");
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showToast('Экспорт в JSON завершен', 'success');
+            } else if (format === 'csv') {
+                let csv = "ID,Category,Name,Serial,Room,Status,Expiry\n";
+                assets.forEach(x => { csv += `"${x.id}","${x.category}","${x.name}","${x.serial}","${x.room}","${x.status}","${x.expiry}"\n`; });
+                const uri = encodeURI("data:text/csv;charset=utf-8," + csv);
+                const a = document.createElement('a');
+                a.setAttribute("href", uri);
+                a.setAttribute("download", "devhard_itam_export.csv");
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showToast('Экспорт в CSV завершен', 'success');
+            }
+        }
+
+        // Toast Notifications
+        function showToast(msg, type = 'success') {
+            logAction(msg);
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `bg-slate-900 border ${type === 'success' ? 'border-cyan-500/40 text-white' : 'border-indigo-500/40 text-white'} px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'info'}" class="w-5 h-5 text-cyan-400"></i><span class="text-sm font-medium">${msg}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 50);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
