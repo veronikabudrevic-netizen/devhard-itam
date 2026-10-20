@@ -314,14 +314,7 @@
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>Добавить актив</span>
                     </button>
-                    <button onclick="exportData('csv')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3.5 py-2.5 rounded-xl text-sm transition-all flex items-center space-x-2 border border-slate-700">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Экспорт CSV</span>
-                    </button>
-                    <button onclick="exportData('json')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-3.5 py-2.5 rounded-xl text-sm transition-all flex items-center space-x-2 border border-slate-700">
-                        <i data-lucide="file-code" class="w-4 h-4 text-cyan-400"></i>
-                        <span>Экспорт JSON</span>
-                    </button>
+                    
                 </div>
             </div>
 
@@ -377,6 +370,7 @@
                         <option value="В работе">В работе</option>
                         <option value="Решен">Решен</option>
                     </select>
+                    <label class="staff-only flex items-center space-x-2 text-sm text-slate-300 cursor-pointer whitespace-nowrap"><input type="checkbox" id="filter-mine" onchange="renderTickets()" class="accent-cyan-500 w-4 h-4"><span>Мои заявки</span></label>
                     <button onclick="openCreateTicketModal()" class="bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-medium px-4 py-2 rounded-xl text-sm shadow-md transition-all flex items-center space-x-2">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>Создать тикет</span>
@@ -394,6 +388,7 @@
                                 <th class="py-4 px-6">Заявитель / Каб.</th>
                                 <th class="py-4 px-6">Приоритет</th>
                                 <th class="py-4 px-6">Статус</th>
+                                <th class="py-4 px-6">Исполнитель</th>
                                 <th class="py-4 px-6">Дата создания</th>
                                 <th class="staff-only py-4 px-6 text-right">Действия</th>
                             </tr>
@@ -645,6 +640,29 @@
         </div>
     </div>
 
+    <!-- Modal: Ticket details, assignee and comments -->
+    <div id="ticket-view-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <h3 class="text-lg font-semibold text-white flex items-center space-x-2 min-w-0"><i data-lucide="message-square" class="w-5 h-5 text-cyan-400 flex-shrink-0"></i><span id="tv-title" class="truncate"></span></h3>
+                <button onclick="closeTicket()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div id="tv-info" class="space-y-3"></div>
+                <div id="tv-assign" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                    <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Назначить исполнителя</label>
+                    <select id="tv-assignee" onchange="assignTicket(this.value)" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"></select>
+                </div>
+                <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Переписка по заявке</h4>
+                <div id="tv-comments" class="space-y-3 max-h-64 overflow-y-auto"></div>
+                <form onsubmit="sendComment(event)" class="flex gap-2">
+                    <input type="text" id="tv-text" required maxlength="1000" placeholder="Напишите сообщение..." class="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                    <button type="submit" class="bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm flex items-center space-x-2"><i data-lucide="send" class="w-4 h-4"></i><span class="hidden sm:inline">Отправить</span></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Create / Edit Ticket -->
     <div id="ticket-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
@@ -847,8 +865,8 @@
         const clientAuthor = () => `${currentUser.name} (${currentUser.room})`;
 
         // ===== SUPABASE: вставьте свои данные из Project Settings -> Data API / API Keys =====
-        const SUPABASE_URL = 'https://mnekfdwlwwmmrkswddlv.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_WH8bNyZsYSwGzoSim_d9vw_OM5EjamQ';
+        const SUPABASE_URL = 'https://drxnksihjgpqpuoragil.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_XlgqZ3J5KZwGQ8Xi2MhPmw_-Ea1lZuP';
         const MAIL_DOMAIN = '@devhard.by'; // логин admin => admin@devhard.by (как в Authentication -> Users)
         const sb = (window.supabase && SUPABASE_URL.startsWith('https://')) ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
         let orgs = [], cats = [];
@@ -857,7 +875,7 @@
                 from: r => ({ id: r.id, category: r.asset_categories ? r.asset_categories.name : '', name: r.name, serial: r.serial, room: r.room, status: r.status, expiry: r.expiry, specs: r.specs, org: r.organization_id, owner: '' }),
                 to: o => ({ id: o.id, organization_id: o.org || null, category_id: (cats.find(c => c.name === o.category) || {}).id || null, name: o.name, serial: o.serial, room: o.room, status: o.status, expiry: o.expiry || null, specs: o.specs }) },
             tickets: { sel: '*',
-                from: r => ({ id: r.id, title: r.title, author: r.author_name, priority: r.priority, status: r.status, date: r.created_on, desc: r.description, org: r.organization_id, owner: '' }),
+                from: r => ({ id: r.id, title: r.title, author: r.author_name, priority: r.priority, status: r.status, date: r.created_on, desc: r.description, org: r.organization_id, assignee: r.assignee_id, owner: '' }),
                 to: o => ({ id: o.id, organization_id: o.org || null, title: o.title, author_name: o.author, priority: o.priority, status: o.status, created_on: o.date, description: o.desc }) },
             kb_articles: { sel: '*',
                 from: r => ({ id: Number(r.id), title: r.title, category: r.category, desc: r.summary, content: r.content, date: r.published_on }),
@@ -888,6 +906,8 @@
             if (o.data && JSON.stringify(o.data) !== JSON.stringify(orgs)) { orgs = o.data; fillOrgSelect(); }
             const c = await sb.from('asset_categories').select('*');
             if (c.data) cats = c.data;
+            const pr = await sb.from('profiles').select('id, full_name, role');
+            if (pr.data && JSON.stringify(pr.data) !== JSON.stringify(people)) { people = pr.data; changed = true; }
             for (const t of Object.keys(TBL)) {
                 const { data, error } = await sb.from(t).select(MAP[t].sel).order('created_at', { ascending: false }).order('id');
                 if (error) { console.error(error); continue; }
@@ -903,6 +923,7 @@
                 }
             }
             if (changed) { renderAll(); renderLog(); }
+            if (openTicketId) loadComments();
         }
         function fillOrgSelect() {
             const l = sb ? orgs.map(o => [o.id, o.name, o.room]) : ACCOUNTS.client.map(c => [c.login, c.name, c.room]);
@@ -933,6 +954,71 @@
         }
         const visibleAssets = () => scoped(assets, 'room');
         const visibleTickets = () => scoped(tickets, 'author');
+
+        let people = [], openTicketId = null;
+        const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const personName = id => { const p = people.find(x => x.id === id); return p ? p.full_name : 'Не назначен'; };
+        const ticketById = id => tickets.find(x => x.id === id);
+
+        function fillTicketInfo(t) {
+            document.getElementById('tv-title').innerText = t.title;
+            document.getElementById('tv-info').innerHTML = `
+                <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-400">
+                    <span>№ <b class="text-slate-200 font-mono">${esc(t.id)}</b></span><span>Заявитель: <b class="text-slate-200">${esc(t.author)}</b></span>
+                    <span>Приоритет: <b class="text-slate-200">${esc(t.priority)}</b></span><span>Статус: <b class="text-slate-200">${esc(t.status)}</b></span>
+                    <span>Создана: <b class="text-slate-200">${esc(t.date)}</b></span><span>Исполнитель: <b class="text-slate-200">${t.assignee ? esc(personName(t.assignee)) : 'не назначен'}</b></span>
+                </div>
+                <p class="text-sm text-slate-300 bg-slate-950 border border-slate-800 rounded-xl p-3 whitespace-pre-wrap">${esc(t.desc)}</p>`;
+        }
+        function openTicket(id) {
+            const t = ticketById(id); if (!t) return;
+            openTicketId = id;
+            fillTicketInfo(t);
+            const admin = !!sb && isStaff() && currentUser.staffRole === 'admin';
+            document.getElementById('tv-assign').classList.toggle('hidden', !admin);
+            if (admin) {
+                document.getElementById('tv-assignee').innerHTML = '<option value="">Не назначен</option>' + people.filter(p => p.role !== 'client').map(p => `<option value="${p.id}">${esc(p.full_name)} (${p.role === 'admin' ? 'администратор' : 'инженер'})</option>`).join('');
+                document.getElementById('tv-assignee').value = t.assignee || '';
+            }
+            document.getElementById('tv-comments').dataset.sig = '';
+            document.getElementById('ticket-view-modal').classList.remove('hidden');
+            loadComments();
+            lucide.createIcons();
+        }
+        function closeTicket() { openTicketId = null; closeModal('ticket-view-modal'); }
+        async function assignTicket(v) {
+            const t = ticketById(openTicketId); if (!t || !sb) return;
+            const { error } = await sb.from('tickets').update({ assignee_id: v || null }).eq('id', t.id);
+            if (error) { alert('Не удалось назначить исполнителя: ' + error.message); document.getElementById('tv-assignee').value = t.assignee || ''; return; }
+            t.assignee = v || null;
+            fillTicketInfo(t); renderTickets();
+            showToast(`Заявка ${t.id}: исполнитель — ${v ? personName(v) : 'не назначен'}`, 'success');
+        }
+        async function loadComments() {
+            const box = document.getElementById('tv-comments');
+            if (!sb) { box.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Переписка доступна при подключении базы данных.</p>'; return; }
+            const { data, error } = await sb.from('ticket_comments').select('*').eq('ticket_id', openTicketId).order('created_at');
+            if (error) { console.error(error); return; }
+            const sig = JSON.stringify(data.map(c => c.id));
+            if (box.dataset.sig === sig) return;
+            box.dataset.sig = sig;
+            box.innerHTML = data.length ? data.map(c => { const mine = c.author_id === currentUser.id; return `
+                <div class="flex ${mine ? 'justify-end' : ''}"><div class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${mine ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-950 border border-slate-800'}">
+                    <div class="text-[11px] text-slate-400 mb-0.5">${esc(c.author_name)} · ${esc(c.author_role)} · ${new Date(c.created_at).toLocaleString('ru-RU')}</div>
+                    <div class="text-slate-100 whitespace-pre-wrap break-words">${esc(c.body)}</div></div></div>`; }).join('')
+                : '<p class="text-xs text-slate-500 text-center py-4">Сообщений пока нет. Напишите первым.</p>';
+            box.scrollTop = box.scrollHeight;
+        }
+        async function sendComment(e) {
+            e.preventDefault();
+            const inp = document.getElementById('tv-text'), body = inp.value.trim();
+            if (!body || !sb || !openTicketId) return;
+            const { error } = await sb.from('ticket_comments').insert({ ticket_id: openTicketId, body, author_name: currentUser.name, author_role: isStaff() ? 'ИТ-отдел' : 'Клиент' });
+            if (error) { alert('Не удалось отправить сообщение: ' + error.message); return; }
+            inp.value = '';
+            logAction(`Комментарий к заявке ${openTicketId}`);
+            loadComments();
+        }
 
         function renderLogin() {
             document.getElementById('login-blocks').innerHTML = ['client', 'staff'].map(r => { const u = ROLE_UI[r]; return `
@@ -1058,7 +1144,8 @@
             sessionStorage.removeItem('devhard_itam_session');
             currentUser = null;
             document.getElementById('notif-panel').classList.add('hidden');
-            ['asset-modal', 'ticket-modal', 'kb-modal', 'kb-reader-modal'].forEach(id => closeModal(id));
+            ['asset-modal', 'ticket-modal', 'ticket-view-modal', 'kb-modal', 'kb-reader-modal'].forEach(id => closeModal(id));
+            openTicketId = null;
             document.body.classList.add('locked');
             document.body.classList.remove('role-client');
             document.getElementById('login-screen').classList.remove('hidden');
@@ -1321,7 +1408,8 @@
             const tbody = document.getElementById('tickets-table-body');
             const empty = document.getElementById('tickets-empty');
 
-            const filtered = visibleTickets().filter(t => statusFilter === 'all' || t.status === statusFilter);
+            const mine = isStaff() && document.getElementById('filter-mine').checked;
+            const filtered = visibleTickets().filter(t => (statusFilter === 'all' || t.status === statusFilter) && (!mine || t.assignee === currentUser.id));
 
             if (filtered.length === 0) {
                 tbody.innerHTML = '';
@@ -1342,10 +1430,11 @@
 
                 return `
                     <tr class="hover:bg-slate-800/50 transition-colors">
-                        <td class="py-4 px-6 font-semibold text-white">${t.title}<div class="text-xs text-slate-500 font-mono">${t.id}</div></td>
+                        <td class="py-4 px-6 font-semibold text-white"><button onclick="openTicket('${t.id}')" class="text-left hover:text-cyan-400 transition-colors flex items-center space-x-1.5"><i data-lucide="message-square" class="w-4 h-4 text-cyan-400 flex-shrink-0"></i><span>${t.title}</span></button><div class="text-xs text-slate-500 font-mono">${t.id}</div></td>
                         <td class="py-4 px-6 text-slate-300">${t.author}</td>
                         <td class="py-4 px-6">${pBadge}</td>
                         <td class="py-4 px-6">${sBadge}</td>
+                        <td class="py-4 px-6 text-xs text-slate-300">${t.assignee ? esc(personName(t.assignee)) : '<span class="text-slate-500">Не назначен</span>'}</td>
                         <td class="py-4 px-6 text-xs text-slate-400">${t.date}</td>
                         ${isStaff() ? `<td class="py-4 px-6 text-right space-x-1">
                             <button onclick="cycleTicketStatus('${t.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors">Статус</button>
@@ -1610,31 +1699,6 @@
         }
 
         // Export CSV / JSON
-        function exportData(format) {
-            if (!isStaff()) return;
-            if (format === 'json') {
-                const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(assets, null, 2));
-                const a = document.createElement('a');
-                a.setAttribute("href", str);
-                a.setAttribute("download", "devhard_itam_export.json");
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                showToast('Экспорт в JSON завершен', 'success');
-            } else if (format === 'csv') {
-                let csv = "ID,Category,Name,Serial,Room,Status,Expiry\n";
-                assets.forEach(x => { csv += `"${x.id}","${x.category}","${x.name}","${x.serial}","${x.room}","${x.status}","${x.expiry}"\n`; });
-                const uri = encodeURI("data:text/csv;charset=utf-8," + csv);
-                const a = document.createElement('a');
-                a.setAttribute("href", uri);
-                a.setAttribute("download", "devhard_itam_export.csv");
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                showToast('Экспорт в CSV завершен', 'success');
-            }
-        }
-
         // Toast Notifications
         function showToast(msg, type = 'success') {
             logAction(msg);
